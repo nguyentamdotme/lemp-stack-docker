@@ -6,9 +6,11 @@ services:
       container_name: dlhf-mysql
       working_dir: /app
       volumes:
-        - ./mysqldata:/app
+        - .:/app
+        - ./config/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+        - ./.docker/mysqldata:/var/lib/mysql
       environment:
-        - MYSQL_ROOT_PASSWORD=dlhf@
+        - MYSQL_ROOT_PASSWORD=root
         - MYSQL_DATABASE=default
       ports:
         - "3306:3306"
