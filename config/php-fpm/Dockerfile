@@ -1,24 +1,18 @@
-FROM phpdockerio/php73-fpm:latest
+FROM php:7.3-fpm-alpine
 WORKDIR "/app"
 
-# Fix debconf warnings upon build
-ARG DEBIAN_FRONTEND=noninteractive
+RUN docker-php-ext-install mysqli pdo pdo_mysql
 
-# Install selected extensions and other stuff
-RUN apt-get update \
-    && apt-get -y --no-install-recommends install  php7.3-mysql \
-    && apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
+RUN set -ex \
+    && apk add --no-cache --virtual .phpize-deps $PHPIZE_DEPS imagemagick-dev libtool \
+    && export CFLAGS="$PHP_CFLAGS" CPPFLAGS="$PHP_CPPFLAGS" LDFLAGS="$PHP_LDFLAGS" \
+    && pecl install imagick-3.4.3 \
+    && docker-php-ext-enable imagick \
+    && apk add --no-cache --virtual .imagick-runtime-deps imagemagick \
+    && apk del .phpize-deps
 
-# Install git
-RUN apt-get update \
-    && apt-get -y install git \
-    && apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
+RUN apk add --no-cache $PHPIZE_DEPS \
+    && pecl install xdebug-2.7.0 \
+    && docker-php-ext-enable xdebug
 
-# Install vim
-RUN apt-get update \
-    && apt-get -y install vim \
-    && apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
-
-RUN docker-php-ext-install pdo_mysql
-
-RUN apt-get update && apt-get -y --no-install-recommends install php-xdebug
+RUN chown -R root:root /app/web && chmod -R 777 /app/web
